@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass, field
-# from litellm import completion_cost
+from litellm import completion_cost
 
 logger = logging.getLogger(__name__)
 
@@ -42,12 +42,28 @@ class CostTracker:
         """
         Log a completion response's cost.
         """
-        # TODO: Implement this method
-        # 1. Check if _current_query exists
-        # 2. Extract usage stats from response
-        # 3. Calculate cost (use litellm.completion_cost or fallback)
-        # 4. create StepCost and add to query
-        pass
+        if not self._current_query:
+            return
+
+        usage = response.usage
+        input_tokens = usage.prompt_tokens if usage else 0
+        output_tokens = usage.completion_tokens if usage else 0
+
+        try:
+            cost = completion_cost(completion_response=response)
+        except Exception:
+            cost = 0.0
+
+        model = response.model or "unknown"
+        step = StepCost(
+            step_number=step_number,
+            model=model,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            cost_usd=cost,
+            is_tool_call=is_tool_call,
+        )
+        self._current_query.add_step(step)
 
     def end_query(self):
         if self._current_query:
@@ -55,6 +71,15 @@ class CostTracker:
             self._current_query = None
 
     def print_cost_breakdown(self):
-        # TODO: Print detailed cost breakdown
-        pass
+        for qc in self.queries:
+            print(f"\n{'='*50}")
+            print(f"Query: {qc.query[:80]}")
+            print(f"{'='*50}")
+            for step in qc.steps:
+                tool_tag = " [tool_call]" if step.is_tool_call else ""
+                print(f"  Step {step.step_number}{tool_tag}: "
+                      f"in={step.input_tokens} out={step.output_tokens} "
+                      f"cost=${step.cost_usd:.4f} ({step.model})")
+            print(f"  Total: in={qc.total_input_tokens} out={qc.total_output_tokens} "
+                  f"cost=${qc.total_cost_usd:.4f}")
 

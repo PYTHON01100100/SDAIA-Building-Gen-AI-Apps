@@ -42,8 +42,7 @@ def validate_url(url: str) -> bool:
     except Exception:
         return False
 
-# @registry.register("search_web", "Search the web for a query. Returns a list of results with title, link, and snippet.", category="research")
-# NOTE: The decorator above will work once you implement the registry!
+@registry.register("search_web", "Search the web for a query. Returns a list of results with title, link, and snippet.", category="research")
 def search_web(query: str, max_results: int = 5) -> list[dict]:
     """
     Search the web using DuckDuckGo (HTML).
@@ -83,8 +82,7 @@ def search_web(query: str, max_results: int = 5) -> list[dict]:
 
     return results
 
-# @registry.register("read_webpage", "Read the content of a webpage. Returns the text content.", category="research")
-# NOTE: The decorator above will work once you implement the registry!
+@registry.register("read_webpage", "Read the content of a webpage. Returns the text content.", category="research")
 def read_webpage(url: str) -> str:
     """Read and extract text from a URL."""
     if not validate_url(url):
